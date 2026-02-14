@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>For my special PUBLO</title>
+  <title>For my special PABLO</title>
   <style>
     body{
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -11,6 +11,7 @@
     }
     .container{ text-align:center; }
     h1{ color:#ff4d6d; margin-bottom:30px; font-size:2.5rem; text-shadow:2px 2px #ffb3c1; }
+
     button{
       padding:15px 35px; font-size:1.2rem; font-weight:700;
       border:none; border-radius:50px; cursor:pointer;
@@ -18,40 +19,148 @@
     }
     #yesBtn{ background:#ff4d6d; color:#fff; margin-right:20px; }
     #yesBtn:hover{ transform:scale(1.05); }
-    #noBtn{ background:#8da9c4; color:#fff; position:absolute; transition:all .2s ease; }
+
+    /* "No" is free to run around the viewport */
+    #noBtn{
+      background:#8da9c4; color:#fff;
+      position: fixed; /* important: allow true viewport movement */
+      transition: all .2s ease;
+    }
+
+    /* Cicada icon */
+    #cicada{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: 34px;
+      height: 34px;
+      color: #6b7c93;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: transform .2s ease, opacity .2s ease;
+      z-index: 10;
+    }
+    #cicada:hover{ transform: scale(1.15); opacity: 1; }
+    #cicada svg{ width: 100%; height: 100%; }
+
+    /* Secret puzzle box */
+    #secret{
+      position: fixed;
+      right: 16px;
+      bottom: 60px;
+      text-align: right;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+      z-index: 10;
+    }
+    #secret.show{ opacity: 1; pointer-events: auto; }
+
+    #secret .cipher{
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      color: #6b7c93;
+      background: rgba(255,255,255,0.65);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+    }
+    #secret .hint{
+      margin-top: 6px;
+      font-size: 11px;
+      color: #ff4d6d;
+    }
   </style>
 </head>
+
 <body>
-  <div class="container">
+  <div class="container" id="main">
     <h1>Will you be my Valentine? ❤️</h1>
-    <button id="yesBtn" onclick="celebrate()">Yes</button>
+    <button id="yesBtn">Yes</button>
     <button id="noBtn">No</button>
+  </div>
+
+  <!-- Cicada corner -->
+  <div id="cicada" title="⟡">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 6c-6 0-10 6-10 12 0 3 1 6 3 8l-9 6 2 3 11-5h6l11 5 2-3-9-6c2-2 3-5 3-8 0-6-4-12-10-12z"
+            fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="26" cy="18" r="1.5" fill="currentColor"/>
+      <circle cx="38" cy="18" r="1.5" fill="currentColor"/>
+      <path d="M32 30v18M26 36l-6 10M38 36l6 10"
+            fill="none" stroke="currentColor" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <div id="secret">
+    <div class="cipher">
+      13:25&nbsp;&nbsp;2:9&nbsp;&nbsp;19:21&nbsp;&nbsp;7:22<br>
+      3:12&nbsp;&nbsp;17:15&nbsp;&nbsp;11:5&nbsp;&nbsp;5:15
+    </div>
+    <div class="hint">hint: primes are not decoration</div>
   </div>
 
   <script>
     const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const main = document.getElementById('main');
 
-    const moveButton = () => {
-      const maxX = window.innerWidth - noBtn.offsetWidth - 20;
-      const maxY = window.innerHeight - noBtn.offsetHeight - 20;
+    const cicada = document.getElementById('cicada');
+    const secret = document.getElementById('secret');
+
+    function moveButton(){
+      const padding = 12;
+
+      const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+      const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+
       const x = Math.floor(Math.random() * Math.max(0, maxX));
       const y = Math.floor(Math.random() * Math.max(0, maxY));
+
       noBtn.style.left = `${x}px`;
       noBtn.style.top = `${y}px`;
-    };
+    }
+
+    // Make "No" start in a sensible place, then dodge
+    function placeNoInitial(){
+      const rect = noBtn.getBoundingClientRect();
+      noBtn.style.left = `${Math.max(0, window.innerWidth/2 + 40)}px`;
+      noBtn.style.top  = `${Math.max(0, window.innerHeight/2 + 20)}px`;
+      // if this pushed it out, just randomize once
+      if (rect.right > window.innerWidth || rect.bottom > window.innerHeight) moveButton();
+    }
+    window.addEventListener('load', placeNoInitial);
+    window.addEventListener('resize', () => {
+      // keep it on-screen after resize
+      const r = noBtn.getBoundingClientRect();
+      if (r.right > window.innerWidth || r.bottom > window.innerHeight) moveButton();
+    });
 
     noBtn.addEventListener('mouseenter', moveButton);
-    noBtn.addEventListener('click', () => { moveButton(); });
+    noBtn.addEventListener('click', moveButton);
 
-    function celebrate(){
-      document.body.innerHTML = `
+    // Cicada toggles the puzzle
+    cicada.addEventListener('click', () => {
+      secret.classList.toggle('show');
+    });
+
+    // YES celebration (without nuking the whole body, so cicada + puzzle stay)
+    yesBtn.addEventListener('click', () => {
+      main.innerHTML = `
         <div style="text-align:center;">
-          <h1 style="font-size:4rem;color:#ff4d6d;margin:0;">Such a sweet BreadButterHoney 🦋</h1>
-          <p style="font-size:1.5rem;color:#ff4d6d;">Hooray! You've made the right choice 😈</p>
-          <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHpueXpueXpueXpueXpueXpueXpueXpueXpueXpueXpueXpueCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/KztT2c4u8mYYUiMKdJ/giphy.gif"
-               alt="Love" style="border-radius:20px;width:300px;">
-        </div>`;
-    }
+          <h1 style="font-size:3.2rem;color:#ff4d6d;margin:0;">Such a sweet BreadButterHoney</h1>
+          <p style="font-size:1.35rem;color:#ff4d6d;margin-top:12px;">Hooray! You've made the right choice 😈</p>
+          <img
+            src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHpueXpueXpueXpueXpueXpueXpueXpueXpueXpueXpueXpueCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/KztT2c4u8mYYUiMKdJ/giphy.gif"
+            alt="Love"
+            style="border-radius:20px;width:300px;max-width:80vw;margin-top:10px;"
+          >
+        </div>
+      `;
+      // Optional: hide the runaway button after success
+      noBtn.style.display = 'none';
+    });
   </script>
 </body>
 </html>
